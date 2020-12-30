@@ -13,7 +13,12 @@ ACollectable::ACollectable()
 
 	CollectableMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CollectableMesh"));
 	CollectableMesh->AttachTo(BaseCollisionComponent);
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> Sphere(TEXT("StaticMesh'/Game/Mesh/Sphere.Sphere'"));
+	if (Sphere.Succeeded())
+		CollectableMesh->SetStaticMesh(Sphere.Object);
 
+	CollectableMesh->SetWorldScale3D(FVector(0.3, 0.3, 0.3));
+	BaseCollisionComponent->SetSphereRadius(16);
 }
 
 
