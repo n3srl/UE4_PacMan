@@ -7,6 +7,13 @@ APacManCharacter::APacManCharacter()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	SetActorEnableCollision(true);
+	bUseControllerRotationYaw = false;
+
+	//Set collider
+	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &APacManCharacter::OnCollision);
+	//Add particle
+	OurParticleSystem = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("MovementParticles"));
+
 }
 
 // Called when the game starts or when spawned
@@ -15,42 +22,33 @@ void APacManCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	m_GameMode = Cast<ApacmanGameModeBase>(UGameplayStatics::GetGameMode(this));
-	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &APacManCharacter::OnCollision);
-
-	// find out how many collectables the player need to eat in order to win
-	for (TActorIterator<ACollectable> CollectableItr(GetWorld()); CollectableItr; ++CollectableItr)
-	{
-		m_CollectablesToEat++;
-	}
+	
 
 	m_StartPoint = GetActorLocation(); // simple get the player location
-	m_Lives = 3; // set the full life when start
+	Lives = 3; // set the full life when start
 }
 
 void APacManCharacter::OnCollision(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	// enter on deeper check only if playing
-	if ( m_GameMode->GetCurrentState() == EGameState::EPlaying ) {
+	ACollectable* collectable = Cast<ACollectable>(OtherActor);
 
-		// check if is a true collectable
-		if ( OtherActor->IsA( ACollectable::StaticClass() ) )
-		{
-			// in any case, destroy that collectable!
-			OtherActor->Destroy();
+	if (collectable != nullptr)
+		if (m_GameMode->GetCurrentState() == EGameState::EPlaying) {
+			m_GameMode->EatCollectible();
 		}
-
-		if ( --m_CollectablesToEat == 0 ) {
-			m_GameMode->SetCurrentState(EGameState::EWin);
-		}
-
-	}
 }
+
+FString APacManCharacter::GetLives() {
+	return FString(""+Lives);
+}
+
 
 void APacManCharacter::Pause()
 {
 	if (m_GameMode->GetCurrentState() == EGameState::EPlaying) {
 		m_GameMode->SetCurrentState(EGameState::EPause);
 	}
+
 	else if (m_GameMode->GetCurrentState() == EGameState::EPause) {
 		m_GameMode->SetCurrentState(EGameState::EPlaying);
 	}
@@ -89,19 +87,59 @@ void APacManCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 void APacManCharacter::MoveXAxis(float AxisValue)
 {
-	CurrentVelocity.X = AxisValue;
-	AddMovementInput(CurrentVelocity);
+	if (AxisValue) {
+		CurrentVelocity.X = AxisValue;
+
+		AddMovementInput( CurrentVelocity );
+
+		FRotator Rotation = GetRotation(CurrentVelocity);
+
+		SetActorRotation(Rotation);
+	}
+	else
+		CurrentVelocity.X = 0;
+}
+
+FRotator APacManCharacter::GetRotation(FVector Vector) {
+	FRotator Rotation = FRotator(0, 0, 0);
+
+	if (Vector.X > 0) {
+		Rotation.Yaw = 0;
+	}
+	else if (Vector.X < 0) {
+		{
+			Rotation.Yaw = 180;
+		}
+	}
+
+	if (Vector.Y > 0) {
+		Rotation.Yaw = 90;
+	}
+	else if (Vector.Y < 0) {
+		{
+			Rotation.Yaw = 270;
+		}
+	}
+
+	return Rotation;
 }
 
 void APacManCharacter::MoveYAxis(float AxisValue)
 {
-	CurrentVelocity.Y = AxisValue;
-	AddMovementInput(CurrentVelocity);
+	if (AxisValue) {
+		CurrentVelocity.Y = AxisValue;
+		AddMovementInput(CurrentVelocity);
+
+		FRotator Rotation = GetRotation(CurrentVelocity);
+		SetActorRotation(Rotation);
+	}
+	else
+		CurrentVelocity.Y = 0;
 }
 
 void APacManCharacter::Kill()
 {
-	if (--m_Lives == 0) {
+	if (--Lives == 0) {
 		m_GameMode->SetCurrentState(EGameState::EGameOver);
 	} else {
 		SetActorLocation(m_StartPoint);

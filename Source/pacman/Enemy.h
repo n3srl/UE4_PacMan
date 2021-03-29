@@ -29,23 +29,40 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	UFUNCTION()
-		void OnCollision(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	UFUNCTION(BlueprintCallable, Category = "Enemy")
+	void SetVulnerable(float TimeEnemyVulnerable);
 
-	UPROPERTY(EditDefaultsOnly, Category = Body)
-		UStaticMeshComponent* EnemyBody;
-	void SetVulnerable();
+	UFUNCTION(BlueprintCallable, Category = "Enemy")
 	void SetInvulnerable();
+	
+	UFUNCTION(BlueprintCallable, Category = "Enemy")
+	bool IsInvulnerable();
+
+	UFUNCTION(BlueprintCallable, Category = "Enemy")
 	void SetMove(bool MoveIt);
+
+	UFUNCTION(BlueprintCallable, Category = "Enemy")
 	void Kill();
+
+	UFUNCTION(BlueprintCallable, Category = "Enemy")
 	void Rearm();
 	
 	bool bIsDead;
 
+	
+
+	UPROPERTY(EditAnywhere, Category = Body)
+	class UMaterialInterface* DefaultMaterial;
+
+	UPROPERTY(EditAnywhere, Category = Body)
+	class UMaterialInterface* VulnerableMaterial;
+
+	UPROPERTY(EditAnywhere, Category = Body)
+	USkeletalMeshComponent* EnemyBody;
+
 private:
 	bool m_bIsVulnerable;
 	FTimerHandle m_TimerVulnerable;
-	class UMaterialInterface* m_DefaultMaterial;
-	class UMaterialInterface* m_VulnerableMaterial;
+	FVector m_SpawnPosition;
 
 };

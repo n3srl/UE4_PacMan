@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -10,6 +8,8 @@
 #include "Engine/Classes/Components/CapsuleComponent.h"
 #include "Engine/Classes/Components/PrimitiveComponent.h"
 #include "Engine/Public/EngineUtils.h"
+#include "Particles/ParticleSystemComponent.h"
+
 
 #include "PacManCharacter.generated.h"
 
@@ -19,6 +19,9 @@ class PACMAN_API APacManCharacter : public ACharacter
 	GENERATED_BODY()
 
 public:
+	UPROPERTY()
+	class UParticleSystemComponent* OurParticleSystem;
+
 	FVector CurrentVelocity;
 
 	// Sets default values for this character's properties
@@ -29,30 +32,38 @@ protected:
 	virtual void BeginPlay() override;
 
 public:	
+
 	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	virtual void Tick(float) override;
 
 	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void SetupPlayerInputComponent(class UInputComponent*) override;
+
+	UFUNCTION(BlueprintCallable, Category = "Pacman")
 	void Kill();
+
+	UFUNCTION(BlueprintCallable, Category = "Pacman")
+	FString GetLives();
+
+	UFUNCTION(BlueprintCallable, Category = "Pacman")
+	void OnCollision(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pacman")
+	int32 Lives; // player total lives
 
 private:
 	ApacmanGameModeBase* m_GameMode;
 
-	uint8 m_CollectablesToEat; // total collectables in order to win
-	uint8 m_Lives; // player total lives
-
 
 	FVector m_StartPoint; // the start point of the player
-	void MoveXAxis(float AxisValue);
-	void MoveYAxis(float AxisValue);
+	void MoveXAxis(float);
+	void MoveYAxis(float);
 	// key events
 	void NewGame();
 	void Pause();
 	void RestartGame();
+	FRotator GetRotation(FVector);
 
-	UFUNCTION()
-		void OnCollision (class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-						
+							
 };
 

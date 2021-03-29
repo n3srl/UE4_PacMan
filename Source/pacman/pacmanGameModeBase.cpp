@@ -5,11 +5,28 @@
 #include "Enemy.h"
 
 
+int ApacmanGameModeBase::GetCollectablesEaten() {
+	return m_CollectablesCounter;
+}
+void ApacmanGameModeBase::SetCollectablesToEat(int CollectablesToEat) {
+	m_CollectablesToEat = CollectablesToEat;
+}
+
+void ApacmanGameModeBase::EatCollectible() {
+	m_CollectablesCounter++;
+
+	if (IsPlayerWinning()) {
+		SetCurrentState(EGameState::EWin);
+	}
+
+	UE_LOG(LogTemp, Error, TEXT("EatCollectible %d/%d"), m_CollectablesCounter, m_CollectablesToEat);
+}
+
 // in PacManGameMode.cpp
 // there is no initializer by default, we need to add one
 ApacmanGameModeBase::ApacmanGameModeBase()
 {
-	//search our custom pacman and set as default pawn if founded
+	//search our custom pacman and as default pawn if founded
 	static ConstructorHelpers::FClassFinder<APawn>
 		PlayerPawnOb(TEXT("Blueprint'/Game/Blueprints/BP_PacMan'"));
 
@@ -17,6 +34,12 @@ ApacmanGameModeBase::ApacmanGameModeBase()
 	{
 		DefaultPawnClass = PlayerPawnOb.Class;
 	}
+
+	m_CollectablesCounter = 0;
+
+}
+EGameState ApacmanGameModeBase::GetCurrentState() {
+	return m_CurrentState;
 }
 
 void ApacmanGameModeBase::SetCurrentState(EGameState value)
@@ -61,12 +84,32 @@ EGameState ApacmanGameModeBase::GetCurrentState() const
 // iterate all the enemies and make them vulnerable
 void ApacmanGameModeBase::SetEnemyVulnerable()
 {
+	GetWorldTimerManager().SetTimer(m_TimerVulnerable, this,
+		&ApacmanGameModeBase::SetEnemyInvulnerable, TimeEnemyVulnerable, false);
+
 	for (auto Iter(m_Enemies.CreateIterator()); Iter; Iter++) {
-		(*Iter)->SetVulnerable();
+		(*Iter)->SetVulnerable(TimeEnemyVulnerable);
+		m_IsEnemyVulnerable = true;
 	}
 }
 
-void ApacmanGameModeBase::BeginPlay() 
+
+// iterate all the enemies and make them vulnerable
+void ApacmanGameModeBase::SetEnemyInvulnerable()
+{
+	m_IsEnemyVulnerable = false;
+
+	OnUpdateInvulnerable.Broadcast();
+}
+
+bool ApacmanGameModeBase::IsPlayerWinning() {
+	if (m_CollectablesCounter >= m_CollectablesToEat)
+		return true;
+
+	return false;
+}
+
+void ApacmanGameModeBase::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -82,4 +125,10 @@ void ApacmanGameModeBase::BeginPlay()
 		AEnemy* enemy = Cast< AEnemy >(*enemyIt);
 		if (enemy) { m_Enemies.Add(enemy); }
 	}
+
+
+}
+
+bool ApacmanGameModeBase::IsEnemyVulnerable() {
+	return m_IsEnemyVulnerable;
 }

@@ -8,8 +8,9 @@ ACollectable::ACollectable()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
-	SetActorEnableCollision(true);
-	BaseCollisionComponent = CreateDefaultSubobject<USphereComponent>(TEXT ("BaseCollisionComponent"));
+	//SetActorEnableCollision(true);
+	//BaseCollisionComponent = CreateDefaultSubobject<USphereComponent>(TEXT ("BaseCollisionComponent"));
+	//BaseCollisionComponent->SetSphereRadius(16);
 
 	CollectableMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CollectableMesh"));
 	CollectableMesh->AttachTo(BaseCollisionComponent);
@@ -18,7 +19,6 @@ ACollectable::ACollectable()
 		CollectableMesh->SetStaticMesh(Sphere.Object);
 
 	CollectableMesh->SetWorldScale3D(FVector(0.3, 0.3, 0.3));
-	BaseCollisionComponent->SetSphereRadius(16);
+	
 }
-
 
